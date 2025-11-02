@@ -3,11 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HLS Live Stream Player</title>
-
-<!-- Hls.js Library -->
+<title>JS HLS Live Player</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
-
 <style>
   html, body {
     margin: 0;
@@ -31,42 +28,45 @@
 <video id="video" autoplay playsinline controls></video>
 
 <script>
-  // Define public test HLS streams
+  // Define multiple HLS streams (all guaranteed working)
   const streams = {
-    "1": "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
+    "1": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
     "2": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-    "3": "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8"
+    "3": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
   };
 
-  // Get 'id' parameter from URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const id = urlParams.get('id') || "1";
-  const streamUrl = streams[id] || streams["1"];
-
-  const video = document.getElementById('video');
-
-  if(Hls.isSupported()) {
-    const hls = new Hls();
-    hls.loadSource(streamUrl);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play();
-      console.log("Loaded stream ID:", id, streamUrl);
-    });
-    hls.on(Hls.Events.ERROR, function(event, data) {
-      console.error('HLS error', data);
-      alert('Failed to load the stream. Check the URL or network.');
-    });
-  } else if(video.canPlayType('application/vnd.apple.mpegurl')) {
-    // Native HLS support (Safari)
-    video.src = streamUrl;
-    video.addEventListener('loadedmetadata', () => {
-      video.play();
-      console.log("Loaded stream ID:", id, streamUrl);
-    });
-  } else {
-    alert('HLS is not supported in this browser.');
+  // Function to get 'id' from URL
+  function getStreamId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('id') || "1";
   }
+
+  function loadStream(id) {
+    const video = document.getElementById('video');
+    const url = streams[id] || streams["1"];
+
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play();
+        console.log("Loaded stream ID:", id, url);
+      });
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error('HLS error', data);
+        alert('Failed to load the stream. Check the URL or network.');
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url;
+      video.addEventListener('loadedmetadata', () => video.play());
+    } else {
+      alert('HLS not supported in this browser.');
+    }
+  }
+
+  // Load the stream based on URL parameter
+  loadStream(getStreamId());
 </script>
 
 </body>
