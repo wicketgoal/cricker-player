@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JW Player HLS Live Stream</title>
+<title>JW Player HLS Live Stream Test</title>
 
-<!-- JW Player -->
-<script src="https://cdn.jwplayer.com/libraries/YourLibraryKey.js"></script>
+<!-- JW Player Free Test Library -->
+<script src="https://cdn.jwplayer.com/libraries/jqvU0fE1.js"></script> 
 
 <style>
   html, body {
@@ -26,11 +26,10 @@
 </head>
 <body>
 
-<!-- JW Player Container -->
 <div id="player"></div>
 
 <script>
-  // Define HLS streams
+  // Public test HLS streams
   const streams = {
     "1": "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
     "2": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
@@ -47,7 +46,6 @@
     file: streamUrl,
     width: "100%",
     height: "100%",
-    aspectratio: "16:9",
     autostart: true,
     controls: true,
     stretching: "uniform"
