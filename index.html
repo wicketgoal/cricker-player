@@ -2,52 +2,121 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YoSinTV Player</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fullscreen HLS Player</title>
+
+<!-- Plyr CSS + HLS.js -->
+<link href="https://cdn.plyr.io/3.6.12/plyr.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdn.plyr.io/3.6.12/plyr.polyfilled.js"></script>
+
 <style>
-  body, html {
+  html, body {
     margin: 0;
     padding: 0;
-    background: #000;
     height: 100%;
-    width: 100%;
+    background: #000;
     overflow: hidden;
   }
-  video {
+
+  .player-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #player {
     width: 100%;
     height: 100%;
+    object-fit: contain;
     background: #000;
+  }
+
+  #fullscreenBtn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    z-index: 10000;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  #fullscreenBtn:hover {
+    background: rgba(0,0,0,0.8);
   }
 </style>
 </head>
 <body>
 
-<video id="video-player" controls autoplay></video>
+<div class="player-container">
+  <video autoplay class="plyr" controls crossorigin="anonymous" id="player" playsinline></video>
+  <button id="fullscreenBtn">Fullscreen</button>
+</div>
 
 <script>
-  // Define your streams
-  const streams = {
-    "1": "https://nw.wikisport.cc/wiki/bbtsp1.m3u8",
-    "2": "https://example.com/stream2.m3u8",
-    "3": "https://example.com/stream3.m3u8"
-  };
+  document.addEventListener("DOMContentLoaded", function () {
 
-  // Get the id from URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const id = urlParams.get('id') || '1'; // default to id=1
-  const streamUrl = streams[id] || streams["1"];
+    // Define multiple HLS streams (all public and working)
+    const streamMap = {
+      "1": { url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", poster: "" },
+      "2": { url: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8", poster: "" },
+      "3": { url: "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8", poster: "" }
+    };
 
-  const video = document.getElementById('video-player');
+    // Get stream id from URL (?id=1,2,3)
+    const urlParams = new URLSearchParams(window.location.search);
+    const streamId = urlParams.get('id') || "1";
+    const selectedStream = streamMap[streamId];
 
-  if (Hls.isSupported()) {
-    const hls = new Hls();
-    hls.loadSource(streamUrl);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = streamUrl;
-  }
+    if (!selectedStream) {
+      alert("Stream not found!");
+      return;
+    }
+
+    const video = document.getElementById('player');
+
+    // Initialize Plyr
+    const player = new Plyr(video, {
+      controls: [
+        'play-large','play','progress','current-time','mute',
+        'volume','settings','pip','airplay','fullscreen'
+      ]
+    });
+
+    if (selectedStream.poster) video.poster = selectedStream.poster;
+
+    // Load the HLS stream
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(selectedStream.url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+      hls.on(Hls.Events.ERROR, (event, data) => console.error("HLS error:", data));
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = selectedStream.url;
+    } else {
+      alert('HLS not supported in this browser.');
+    }
+
+    // Fullscreen button
+    document.getElementById('fullscreenBtn').addEventListener('click', () => {
+      if (video.requestFullscreen) video.requestFullscreen();
+      else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+      else if (video.msRequestFullscreen) video.msRequestFullscreen();
+    });
+  });
 </script>
 
 </body>
