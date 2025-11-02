@@ -8,6 +8,9 @@
 <!-- Hls.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
 
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
+
 <style>
   html, body {
     margin: 0;
@@ -16,6 +19,7 @@
     height: 100%;
     background: #000;
     overflow: hidden;
+    font-family: 'Roboto', sans-serif;
   }
 
   video {
@@ -25,18 +29,19 @@
     background: #000;
   }
 
-  /* Bottom center overlay text */
+  /* Bottom-center overlay text (slightly higher) */
   #overlay-text {
     position: absolute;
-    bottom: 20px;
+    bottom: 60px; /* moved higher */
     left: 50%;
     transform: translateX(-50%);
     color: #fff;
-    font-size: 18px;
-    font-weight: bold;
-    text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+    font-size: 22px;
+    font-weight: 700;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
     z-index: 10;
-    pointer-events: none; /* allows clicks to pass through */
+    pointer-events: none;
+    font-family: 'Roboto', sans-serif;
   }
 </style>
 </head>
