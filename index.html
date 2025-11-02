@@ -1,123 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Fullscreen HLS Player</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Channel M3U8 Player</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
 
-<!-- Plyr CSS + HLS.js -->
-<link href="https://cdn.plyr.io/3.6.12/plyr.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script src="https://cdn.plyr.io/3.6.12/plyr.polyfilled.js"></script>
+    .player-container {
+      width: 100vw;
+      height: 90vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+    }
 
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    background: #000;
-    overflow: hidden;
-  }
+    video {
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
 
-  .player-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999;
-    background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      margin-top: 5px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
 
-  #player {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: #000;
-  }
+    .buttons button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: #552a86;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
 
-  #fullscreenBtn {
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    z-index: 10000;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-  }
-
-  #fullscreenBtn:hover {
-    background: rgba(0,0,0,0.8);
-  }
-</style>
+    .buttons button.active,
+    .buttons button:hover {
+      background: #9e1414;
+    }
+  </style>
 </head>
 <body>
 
-<div class="player-container">
-  <video autoplay class="plyr" controls crossorigin="anonymous" id="player" playsinline></video>
-  <button id="fullscreenBtn">Fullscreen</button>
-</div>
+  <div class="player-container">
+    <video id="video" controls autoplay></video>
+  </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
+  <div class="buttons">
+    <button data-stream="https://nw.wikisport.cc/wiki/bbtsp1.m3u8">Nepal</button>
+    <button data-stream="https://example.com/india.m3u8">India</button>
+    <button data-stream="https://example.com/tnt.m3u8">TNT</button>
+  </div>
 
-    // Define multiple HLS streams (all public and working)
-    const streamMap = {
-      "1": { url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", poster: "" },
-      "2": { url: "https://nw.wikisport.cc/wiki/bbtsp1.m3u8", poster: "" },
-      "3": { url: "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8", poster: "" }
-    };
+  <script>
+    const video = document.getElementById('video');
+    const buttons = document.querySelectorAll('.buttons button');
 
-    // Get stream id from URL (?id=1,2,3)
-    const urlParams = new URLSearchParams(window.location.search);
-    const streamId = urlParams.get('id') || "1";
-    const selectedStream = streamMap[streamId];
-
-    if (!selectedStream) {
-      alert("Stream not found!");
-      return;
+    function loadStream(url) {
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
+      }
     }
 
-    const video = document.getElementById('player');
-
-    // Initialize Plyr
-    const player = new Plyr(video, {
-      controls: [
-        'play-large','play','progress','current-time','mute',
-        'volume','settings','pip','airplay','fullscreen'
-      ]
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Remove active from all buttons
+        buttons.forEach(b => b.classList.remove('active'));
+        // Set active class for clicked button
+        btn.classList.add('active');
+        // Load selected stream
+        loadStream(btn.getAttribute('data-stream'));
+      });
     });
 
-    if (selectedStream.poster) video.poster = selectedStream.poster;
-
-    // Load the HLS stream
-    if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(selectedStream.url);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-      hls.on(Hls.Events.ERROR, (event, data) => console.error("HLS error:", data));
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = selectedStream.url;
-    } else {
-      alert('HLS not supported in this browser.');
-    }
-
-    // Fullscreen button
-    document.getElementById('fullscreenBtn').addEventListener('click', () => {
-      if (video.requestFullscreen) video.requestFullscreen();
-      else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
-      else if (video.msRequestFullscreen) video.msRequestFullscreen();
-    });
-  });
-</script>
+    // Load the first stream by default
+    buttons[0].classList.add('active');
+    loadStream(buttons[0].getAttribute('data-stream'));
+  </script>
 
 </body>
 </html>
