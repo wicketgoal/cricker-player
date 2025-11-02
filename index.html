@@ -24,14 +24,29 @@
     object-fit: contain;
     background: #000;
   }
+
+  /* Bottom center overlay text */
+  #overlay-text {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+    z-index: 10;
+    pointer-events: none; /* allows clicks to pass through */
+  }
 </style>
 </head>
 <body>
 
 <video id="video" autoplay playsinline controls></video>
+<div id="overlay-text">wicketgoal.com</div>
 
 <script>
-  // Define public test HLS streams
+  // Define your streams
   const streams = {
     "1": "https://webott.viatv.com.np/v0t1/KntC!neplexTv.stream/playlist.m3u8",
     "2": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
@@ -58,7 +73,6 @@
       alert('Failed to load the stream. Check the URL or network.');
     });
   } else if(video.canPlayType('application/vnd.apple.mpegurl')) {
-    // Native HLS support (Safari)
     video.src = streamUrl;
     video.addEventListener('loadedmetadata', () => {
       video.play();
