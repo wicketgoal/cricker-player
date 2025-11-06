@@ -5,10 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HLS Live Stream Player</title>
 
-<!-- Hls.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
-
-<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
 
 <style>
@@ -29,29 +26,13 @@
     background: #000;
   }
 
-  /* Bottom-center overlay text (slightly higher) */
-  #overlay-text {
-    position: absolute;
-    bottom: 60px; /* moved higher */
-    left: 50%;
-    transform: translateX(-50%);
-    color: #fff;
-    font-size: 22px;
-    font-weight: 700;
-    text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
-    z-index: 10;
-    pointer-events: none;
-    font-family: 'Roboto', sans-serif;
-  } /* Bottom-center overlay text */
   #overlay-text {
     position: absolute;
     bottom: 5%;
     left: 50%;
     transform: translateX(-50%);
     color: rgba(255, 255, 255, 0.7);
-    font-size: 1.2vw;
-    min-font-size: 12px;
-    max-font-size: 20px;
+    font-size: clamp(12px, 1.2vw, 20px);
     font-weight: 600;
     text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
     z-index: 10;
@@ -69,26 +50,24 @@
 </head>
 <body>
 
-<video id="video" autoplay playsinline controls></video>
+<video id="video" autoplay muted playsinline controls></video>
 <div id="overlay-text">WicketGoal.com</div>
 
 <script>
-  // Define your streams
   const streams = {
     "1": "https://webott.viatv.com.np/v0t1/KntC!neplexTv.stream/chunks.m3u8",
     "2": "https://foxmatch.pages.dev/English.m3u8",
     "3": "https://foxmatch.pages.dev/Hindi.m3u8",
-    "4": "https://nw.wikisport.cc/wiki/bbtsp3.m3u8",
+    "4": "https://nw.wikisport.cc/wiki/bbtsp3.m3u8"
   };
 
-  // Get 'id' parameter from URL
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id') || "1";
   const streamUrl = streams[id] || streams["1"];
 
   const video = document.getElementById('video');
 
-  if(Hls.isSupported()) {
+  if (Hls.isSupported()) {
     const hls = new Hls();
     hls.loadSource(streamUrl);
     hls.attachMedia(video);
@@ -96,11 +75,13 @@
       video.play();
       console.log("Loaded stream ID:", id, streamUrl);
     });
-    hls.on(Hls.Events.ERROR, function(event, data) {
+    hls.on(Hls.Events.ERROR, (event, data) => {
       console.error('HLS error', data);
-      alert('Failed to load the stream. Check the URL or network.');
+      if (data.fatal) {
+        alert('Failed to load the stream. Check the URL or network.');
+      }
     });
-  } else if(video.canPlayType('application/vnd.apple.mpegurl')) {
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
     video.src = streamUrl;
     video.addEventListener('loadedmetadata', () => {
       video.play();
