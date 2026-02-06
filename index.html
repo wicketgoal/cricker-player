@@ -3,93 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HLS Live Stream Player</title>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
+<title>Universal Player</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0"></script>
 
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    background: #000;
-    overflow: hidden;
-    font-family: 'Roboto', sans-serif;
-  }
-
-  video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: #000;
-  }
-
-  #overlay-text {
-    position: absolute;
-    bottom: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-    color: rgba(255, 255, 255, 0.7);
-    font-size: clamp(12px, 1.2vw, 20px);
-    font-weight: 600;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
-    z-index: 10;
-    pointer-events: none;
-    font-family: 'Roboto', sans-serif;
-  }
-
-  @media (max-width: 600px) {
-    #overlay-text {
-      font-size: 14px;
-      bottom: 8%;
+    html, body {
+        margin: 0;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
     }
-  }
+
+    #videoPlayer, #iframeViewer {
+        width: 100%;
+        height: 100%;
+        display: none;
+        border: none;
+        background: #000;
+    }
+
+    /* Loader Spinner */
+    #loader {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 6px solid rgba(255,255,255,0.2);
+        border-top: 6px solid #fff;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        animation: spin 0.9s linear infinite;
+        z-index: 20;
+    }
+
+    @keyframes spin {
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Watermark */
+    #overlay-text {
+        position: absolute;
+        bottom: 5%;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 18px;
+        z-index: 15;
+        pointer-events: none;
+    }
 </style>
 </head>
 <body>
 
-<video id="video" autoplay muted playsinline controls></video>
-<div id="overlay-text">WicketGoal.com</div>
+<div id="loader"></div>
+
+<video id="videoPlayer" controls autoplay playsinline></video>
+
+<!-- IMPORTANT: no sandbox (same as old working code) -->
+<iframe id="iframeViewer"></iframe>
+
+<div id="overlay-text"></div>
 
 <script>
-  const streams = {
-    "kt": "https://webott.viatv.com.np/v0t1/CineplexHD.stream/chunks.m3u8",
-    "as": "https://webott.viatv.com.np/v0t1/ASportsHd/playlist.m3u8",
-    "wl": "https://cricketstan.github.io/Willow-Sports/",
-    "wl2": "https://crichd.xfireflix.workers.dev/player?id=willowusa",
-  };
+    const streams = {
+        
+        "wl": "https://crichd.xfireflix.workers.dev/player?id=willowusa",
+        "ptv": "https://n.shopnojaal.top/ayna/play.php?id=eacf6c3f-0773-4bc3-a03a-cfee09f10348",
+         "as": "https://n.shopnojaal.top/ayna/play.php?id=a3d48c46-7902-45e2-abf9-0fab60c4d117",
+        "wl2": "https://cricketstan.github.io/Willow-Sports/",
+        "india": "https://n.shopnojaal.top/ayna/play.php?id=f064e069-8861-43d5-ac79-828b029a50a1",
+    };
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const id = urlParams.get('id') || "1";
-  const streamUrl = streams[id] || streams["1"];
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id") || "1";
+    const url = streams[id] || streams["1"];
 
-  const video = document.getElementById('video');
+    const video = document.getElementById("videoPlayer");
+    const iframe = document.getElementById("iframeViewer");
+    const loader = document.getElementById("loader");
 
-  if (Hls.isSupported()) {
-    const hls = new Hls();
-    hls.loadSource(streamUrl);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play();
-      console.log("Loaded stream ID:", id, streamUrl);
-    });
-    hls.on(Hls.Events.ERROR, (event, data) => {
-      console.error('HLS error', data);
-      if (data.fatal) {
-        alert('Failed to load the stream. Check the URL or network.');
-      }
-    });
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = streamUrl;
-    video.addEventListener('loadedmetadata', () => {
-      video.play();
-      console.log("Loaded stream ID:", id, streamUrl);
-    });
-  } else {
-    alert('HLS is not supported in this browser.');
-  }
+    function hideLoader() {
+        loader.style.display = "none";
+    }
+
+    // ----- DETECT TYPE -----
+    const isHLS = url.endsWith(".m3u8") || url.includes("playlist.m3u8");
+    const videoExt = ["mp4", "webm", "ogg", "mov", "mkv"];
+    const isVideo = videoExt.some(ext => url.toLowerCase().includes("." + ext));
+
+    if (isHLS) {
+        // ----- HLS VIDEO -----
+        video.style.display = "block";
+
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                video.play();
+                hideLoader();
+            });
+            hls.on(Hls.Events.ERROR, () => hideLoader());
+        } else {
+            // Safari fallback
+            video.src = url;
+            video.addEventListener("loadedmetadata", () => {
+                video.play();
+                hideLoader();
+            });
+        }
+
+    } else if (isVideo) {
+        // ----- NORMAL VIDEO FILE -----
+        video.style.display = "block";
+        video.src = url;
+
+        video.addEventListener("loadeddata", hideLoader);
+
+    } else {
+        // ----- IFRAME (ALL OTHER LINKS) -----
+        iframe.style.display = "block";
+        iframe.src = url;
+
+        // Hide loader when iframe finishes loading
+        iframe.onload = () => {
+            hideLoader();
+        };
+    }
 </script>
 
 </body>
